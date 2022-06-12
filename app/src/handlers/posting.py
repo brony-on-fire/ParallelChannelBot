@@ -1,6 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import ChatTypeFilter
 from src.bases.db_operations import ChatMessage, ChannelMessage
+from src.markups.markups import mainMenu
 from create_bot import dp, bot
 
 async def posting(message:types.Message):
@@ -19,9 +20,13 @@ async def posting(message:types.Message):
             await message.reply(message_for_answer)
         else:
             channel = check_permission['message']
-            save_post = await bot.send_message(channel, message_for_post)
+            save_post = await bot.send_message(channel, message_for_post, reply_markup=mainMenu)
             save_post = ChannelMessage(save_post)
             save_post.save_post(author = message.from_user.id)
 
+async def complain(message:types.Message):
+    await message.reply('Не нажимать!')
+
 def register_handlers_posting(dp:Dispatcher):
     dp.register_message_handler(posting, ChatTypeFilter(chat_type=[types.ChatType.GROUP, types.ChatType.SUPERGROUP]), commands=['channel_post'])
+    dp.register_callback_query_handler(complain, text='complain')
