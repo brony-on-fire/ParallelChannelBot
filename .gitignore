@@ -1,0 +1,4 @@
+__pycache__
+pgdata
+.env
+.vscode

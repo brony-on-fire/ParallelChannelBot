@@ -1,0 +1,43 @@
+# Use root/example as user/password credentials
+version: '3.8'
+
+networks:
+  bot_network:
+
+services:
+
+  python:
+    build: ./python
+    container_name: parallel_bot
+    restart: always
+    environment:
+      - BOT_TOKEN
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    networks:
+      - bot_network
+    volumes:
+      - ./app:/usr/src/app
+
+  postgres:
+    build: ./postgres
+    container_name: parallel_db
+    restart: always
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - PGDATA
+    networks:
+      - bot_network
+    volumes:
+      - .:/var/lib/postgresql/data
+
+  adminer:
+     image: adminer
+     restart: always
+     networks:
+      - bot_network
+     ports:
+      - 8080:8080
