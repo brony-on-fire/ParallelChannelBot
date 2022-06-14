@@ -26,6 +26,7 @@ class Channel(Base):
     updated_at = Column(DateTime, nullable=False)
     posts = relationship('Post', back_populates='channels')
     blacklist = relationship('Blacklist', back_populates='channels')
+    complains = relationship('Complain', back_populates='channels')
 
 class Post(Base):
     '''
@@ -39,20 +40,22 @@ class Post(Base):
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
     channels = relationship('Channel', back_populates='posts')
-    votes = relationship('Vote', back_populates='posts')
+    complains = relationship('Complain', back_populates='posts')
 
-class Vote(Base):
+class Complain(Base):
     '''
     Таблица для жалоб
     '''
-    __tablename__ = 'votes'  
+    __tablename__ = 'complains'  
     
-    id_vote = Column(Integer, primary_key=True)
+    id_complain = Column(Integer, primary_key=True)
     post_id = Column(ForeignKey('posts.id_telegram'))
+    channel_id = Column(ForeignKey('channels.id_telegram'))
     author_id = Column(BigInteger, nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False) 
-    posts = relationship('Post', back_populates='votes')
+    posts = relationship('Post', back_populates='complains')
+    channels = relationship('Channel', back_populates='complains')
 
 class Blacklist(Base):
     '''
@@ -60,7 +63,8 @@ class Blacklist(Base):
     '''
     __tablename__ = 'blacklist'
     
-    id_telegram = Column(BigInteger, primary_key=True, autoincrement = False)
+    id_blackrecord = Column(Integer, primary_key=True)
+    id_telegram = Column(BigInteger, nullable=False)
     channel_id = Column(ForeignKey('channels.id_telegram'))
     username = Column(String)
     first_name = Column(String)

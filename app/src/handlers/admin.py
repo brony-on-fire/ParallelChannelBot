@@ -1,6 +1,6 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import ChatTypeFilter
-from src.bases.db_operations import ChannelMessage
+from src.bases.db_operations import ChannelSetting
 from create_bot import dp
 
 async def link_chat(message: types.Message):
@@ -12,7 +12,7 @@ async def link_chat(message: types.Message):
     if linked_chat_id == '':
         await message.reply('Вы не указали id чата для связывания.')
     else:
-        new_link = ChannelMessage(message)
+        new_link = ChannelSetting(message)
         new_link.connect_chat(linked_chat_id)
         await message.reply('Привязка осуществлена.')
 
