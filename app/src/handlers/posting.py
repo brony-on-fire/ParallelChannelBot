@@ -43,5 +43,5 @@ async def complain(call:types.CallbackQuery):
         await call.answer(text = f'{save_complain_message}', cache_time=10)
 
 def register_handlers_posting(dp:Dispatcher):
-    dp.register_message_handler(posting, ChatTypeFilter(chat_type=[types.ChatType.GROUP, types.ChatType.SUPERGROUP]), commands=['channel_post'])
+    dp.register_message_handler(posting, ChatTypeFilter(chat_type=[types.ChatType.GROUP, types.ChatType.SUPERGROUP]), commands=['post'])
     dp.register_callback_query_handler(complain, text_contains='complain')
