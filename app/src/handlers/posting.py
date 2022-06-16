@@ -1,7 +1,9 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import ChatTypeFilter
 from time import time
-from src.bases.db_operations import ChatPosting, ChannelPosting, ComplainAction
+from src.bases.ChatPosting import ChatPosting
+from src.bases.ChannelPosting import ChannelPosting
+from src.bases.ComplainAction import ComplainAction
 from src.markups.markups import mainMenu, comments_button
 from create_bot import dp, bot
 
