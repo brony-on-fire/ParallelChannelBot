@@ -7,8 +7,9 @@ from sqlalchemy import create_engine
 POSTGRES_DB = environ.get("POSTGRES_DB")
 POSTGRES_USER = environ.get("POSTGRES_USER")
 POSTGRES_PASSWORD = environ.get("POSTGRES_PASSWORD")
+POSTGRES_CONTAINER_NAME = environ.get("POSTGRES_CONTAINER_NAME")
 
-engine_settings = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@parallel_db:5432/{POSTGRES_DB}"
+engine_settings = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_CONTAINER_NAME}:5432/{POSTGRES_DB}"
 engine = create_engine(engine_settings)
 Base = declarative_base()
 
