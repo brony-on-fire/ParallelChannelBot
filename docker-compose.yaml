@@ -35,10 +35,10 @@ services:
     volumes:
       - .:/var/lib/postgresql/data
 
-  adminer:
-     image: adminer
-     restart: always
-     networks:
-      - bot_network
-     ports:
-      - 8080:8080
+#  adminer:
+#     image: adminer
+#     restart: always
+#     networks:
+#      - bot_network
+#     ports:
+#      - 8080:8080
