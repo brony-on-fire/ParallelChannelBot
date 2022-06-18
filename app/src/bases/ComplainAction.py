@@ -15,9 +15,9 @@ class ComplainAction(ChannelMessage):
                                                     & (Complain.post_id == self.message_id)).\
                                                     one_or_none()
 
-    def save_complain(self):
+    def save_delete_complain(self):
         '''
-        Сохраняет жалобу в БД, если от пользователя она не поступала на данный пост
+        Сохраняет жалобу в БД, если её нет и удаляет, если она есть
         '''
 
         if not self.get_complain:
@@ -28,16 +28,9 @@ class ComplainAction(ChannelMessage):
             self.s.commit()
             return 'Жалоба отправлена!'
         else:
-            return 'Вы уже жаловались на этот пост!'
-
-    def delete_complain(self):
-        '''
-        Удаляем жалобу от пользователя в БД, если она существует
-        '''
-
-        if self.get_complain:
             self.s.delete(self.get_complain)
             self.s.commit()
+            return 'Жалоба удалена!'            
 
     def count_of_complains(self):
         '''
@@ -56,6 +49,8 @@ class ComplainAction(ChannelMessage):
                                                 count()
             
             return {'count': complains_count, 'count_for_block': votes_for_block}
+        else:
+            return {'count': 0, 'count_for_block': votes_for_block}
 
     def block_author(self):
         '''
@@ -88,10 +83,16 @@ class ComplainAction(ChannelMessage):
             mute_end_date = mute_end_date.isoformat('T', 'minutes')
             
             return f'заблокирован до {mute_end_date} по МСК. При повторном инциденте автор будет заблокирован навсегда.'
-        else:
-            check_ban.type_of_access_restriction = 'ban'
-            check_ban.updated_at = datetime.now()
-            self.s.add(check_ban)
-            self.s.commit()
+        elif check_ban.type_of_access_restriction == 'mute':
+            #Проверяем, что пользователь не в блоке сейчас и пост опубликован после предыдущего блока
+            if check_ban.mute_end_date < datetime.now() and get_post.created_at > check_ban.updated_at: 
+                check_ban.type_of_access_restriction = 'ban'
+                check_ban.updated_at = datetime.now()
+                self.s.add(check_ban)
+                self.s.commit()
 
-            return 'заблокирован навсегда.'
+                return 'заблокирован навсегда.'
+            else:
+                return None
+        else:
+            return None

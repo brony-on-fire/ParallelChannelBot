@@ -44,11 +44,14 @@ class ChannelSetting(ChannelMessage):
         except ValueError:
             return "Неправильный формат числа!"
         
+        #Изменяем параметр в БД
         match setting:
             case "mute_timer":
-                self.get_channel.update({Channel.mute_timer: value, Channel.updated_at: datetime.now()})
+                self.get_channel.mute_timer = value
             case "votes_for_block":
-                self.get_votes_for_block.update({Channel.votes_for_block: value, Channel.updated_at: datetime.now()})
+                self.get_channel.votes_for_block = value
+        self.get_channel.updated_at = datetime.now()
+        self.s.add(self.get_channel)
         self.s.commit()
         
         param_for_message = settings_dict[setting]

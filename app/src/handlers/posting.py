@@ -11,10 +11,15 @@ async def posting(message:types.Message):
     '''
     Создаёт пост в привязанном канале
     '''
-    message_for_post = message.get_args()
+    if message.reply_to_message:
+        message_for_post = message.reply_to_message.text
+    else:
+        message_for_post = message.get_args()
 
     if not message_for_post:
         await message.reply('Вы не указали текст для поста.')
+    elif message.reply_to_message and (message.from_user.id != message.reply_to_message.from_user.id):
+        await message.reply('Вы можете переслать в канал только свое сообщение.')
     else:
         new_post = ChatPosting(message)
         check_permission = new_post.check_permission_for_posting()
@@ -38,14 +43,17 @@ async def create_comment_button(message:types.Message):
         channel_id = message.sender_chat.id
         post_id = message.forward_from_message_id
 
-        #Формируем кнопку обсуждения
-        message_id_for_url = message.message_id
-        chat_id_for_url = str(message.chat.id)[4:]
-        
-        comments_button.url = f'https://t.me/c/{chat_id_for_url}/{message_id_for_url}?thread={message_id_for_url}'
+        #Проверяем, что пост есть в БД (то есть создан ботом, а не вручную)
+        if ChannelPosting(message).post_exist(channel_id, post_id):
 
-        #Добавляем к посту клавиатуру
-        await bot.edit_message_reply_markup(chat_id=channel_id, message_id=post_id, reply_markup=mainMenu)
+            #Формируем кнопку обсуждения
+            message_id_for_url = message.message_id
+            chat_id_for_url = str(message.chat.id)[4:]
+            
+            comments_button.url = f'https://t.me/c/{chat_id_for_url}/{message_id_for_url}?thread={message_id_for_url}'
+
+            #Добавляем к посту клавиатуру
+            await bot.edit_message_reply_markup(chat_id=channel_id, message_id=post_id, reply_markup=mainMenu)
 
 async def complain(call:types.CallbackQuery):
     '''
@@ -55,18 +63,21 @@ async def complain(call:types.CallbackQuery):
 
     #Сохраняем жалобу в БД
     new_complain = ComplainAction(call.message, author)
-    save_complain_message = new_complain.save_complain()
+    save_complain_message = new_complain.save_delete_complain()
 
     #Запрашиваем общее количество жалоб на пост
     count_of_complain = ComplainAction(call.message, author).count_of_complains()
     
     #После учета жалобы проверяем их общее количество и, при необходимости, блокируем пользователя
-    if count_of_complain['count'] == count_of_complain['count_for_block']:
+    if count_of_complain['count'] >= count_of_complain['count_for_block']:
         block_author_message = new_complain.block_author()
-        await call.message.edit_text(text = f'Пост удален за многочисленные жалобы. Автор поста {block_author_message}')
+        if block_author_message:
+            await call.message.edit_text(text = f'Пост удален за многочисленные жалобы. Автор поста {block_author_message}')
+        else:
+            await call.answer(text = 'Автор поста уже был заблокирован за более поздний пост.', cache_time=1)
     else:
         #Отправляем сообщение, что жалоба обработана
-        await call.answer(text = f'{save_complain_message}', cache_time=10)
+        await call.answer(text = f'{save_complain_message}', cache_time=1)
 
 def register_handlers_posting(dp:Dispatcher):
     dp.register_message_handler(posting, ChatTypeFilter(chat_type=[types.ChatType.GROUP, types.ChatType.SUPERGROUP]), commands=['post'])
