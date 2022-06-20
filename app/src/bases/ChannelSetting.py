@@ -10,6 +10,18 @@ class ChannelSetting(ChannelMessage):
         super().__init__(message)
         self.get_channel = self.s.query(Channel).where(Channel.id_telegram == self.chat_id).one_or_none()
         
+    def chat_used(self, linked_chat_id):
+        '''
+        Проверяет, что чат не привязан к другому каналу
+        '''
+
+        get_chat = self.s.query(Channel).where(Channel.linked_chat_id == linked_chat_id).one_or_none()
+
+        if get_chat:
+            return True
+        else:
+            return False
+
     def connect_chat(self, linked_chat_id):
         '''
         Добавляет/изменяет связь канала и чата

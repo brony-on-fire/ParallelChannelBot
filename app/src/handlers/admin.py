@@ -5,9 +5,13 @@ from create_bot import dp
 
 async def get_id(message: types.Message):
     '''
-    Возвращает id чата
+    Возвращает id чата, если он еще не привязан к каналу
     '''
-    await message.reply(message.chat.id)
+    
+    chat_used = ChannelSetting(message).chat_used(message.chat.id)
+
+    if not chat_used:
+        await message.reply(message.chat.id)
 
 async def help_bot(message: types.Message):
     '''
@@ -29,12 +33,17 @@ async def link_chat(message: types.Message):
     '''
     linked_chat_id = message.text[10:]
 
+    #Проверяем, что чат не привязан к другому каналу
+    chat_used = ChannelSetting(message).chat_used(linked_chat_id)
+
     if linked_chat_id == '':
         await message.reply('Вы не указали id чата для связывания.')
-    else:
+    elif not chat_used:
         new_link = ChannelSetting(message)
         new_link.connect_chat(linked_chat_id)
         await message.reply('Привязка осуществлена.')
+    else:
+        await message.reply('Этот чат уже привязан к другому каналу.')
 
 async def mute_timer(message: types.Message):
     '''
