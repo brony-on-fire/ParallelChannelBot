@@ -1,5 +1,6 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import ChatTypeFilter
+from aiogram.utils.exceptions import BotKicked, Unauthorized
 from time import time
 from src.bases.ChatPosting import ChatPosting
 from src.bases.ChannelPosting import ChannelPosting
@@ -16,23 +17,26 @@ async def posting(message:types.Message):
     else:
         message_for_post = message.get_args()
 
-    if not message_for_post:
-        await message.reply('Вы не указали текст для поста.')
-    elif message.reply_to_message and (message.from_user.id != message.reply_to_message.from_user.id):
-        await message.reply('Вы можете переслать в канал только свое сообщение.')
-    else:
-        new_post = ChatPosting(message)
-        check_permission = new_post.check_permission_for_posting()
-        if check_permission['status'] == False:
-            message_for_answer = check_permission['message']
-            await message.reply(message_for_answer)
+    try:
+        if not message_for_post:
+            await message.reply('Вы не указали текст для поста.')
+        elif message.reply_to_message and (message.from_user.id != message.reply_to_message.from_user.id):
+            await message.reply('Вы можете переслать в канал только свое сообщение.')
         else:
-            channel = check_permission['message']
-            save_post = await bot.send_message(channel, message_for_post)
+            new_post = ChatPosting(message)
+            check_permission = new_post.check_permission_for_posting()
+            if check_permission['status'] == False:
+                message_for_answer = check_permission['message']
+                await message.reply(message_for_answer)
+            else:
+                channel = check_permission['message']
+                save_post = await bot.send_message(channel, message_for_post)
 
-            #Сохраняем пост в БД
-            save_post = ChannelPosting(save_post)
-            save_post.save_post(author = message.from_user.id)
+                #Сохраняем пост в БД
+                save_post = ChannelPosting(save_post)
+                save_post.save_post(author = message.from_user.id)
+    except (BotKicked, Unauthorized):
+        await message.reply('Бот больше не состоит в привязанном к чату канале.')
 
 async def create_comment_button(message:types.Message):
     '''
