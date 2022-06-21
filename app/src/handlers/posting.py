@@ -1,6 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import ChatTypeFilter
 from aiogram.utils.exceptions import BotKicked, Unauthorized
+from aiogram.utils.markdown import escape_md
 from time import time
 from src.bases.ChatPosting import ChatPosting
 from src.bases.ChannelPosting import ChannelPosting
@@ -12,6 +13,8 @@ async def posting(message:types.Message):
     '''
     Создаёт пост в привязанном канале
     '''
+    author = message.from_user.id
+
     if message.reply_to_message:
         message_for_post = message.reply_to_message.text
     else:
@@ -20,21 +23,30 @@ async def posting(message:types.Message):
     try:
         if not message_for_post:
             await message.reply('Вы не указали текст для поста.')
-        elif message.reply_to_message and (message.from_user.id != message.reply_to_message.from_user.id):
+        elif message.reply_to_message and (author != message.reply_to_message.from_user.id):
             await message.reply('Вы можете переслать в канал только свое сообщение.')
         else:
             new_post = ChatPosting(message)
+
+            #Проверяем, что пользователь может постить в канал
             check_permission = new_post.check_permission_for_posting()
             if check_permission['status'] == False:
                 message_for_answer = check_permission['message']
                 await message.reply(message_for_answer)
             else:
                 channel = check_permission['message']
-                save_post = await bot.send_message(channel, message_for_post)
+
+                #Отправляем пост в канал cо ссылкой на автора, если он подписан
+                user_status = await bot.get_chat_member(channel, author)
+                if isinstance(user_status, types.ChatMemberMember | types.ChatMemberOwner | types.ChatMemberAdministrator):
+                    message_for_post = escape_md(message_for_post) + f'\n\n[Ссылка на автора](tg://user?id={author})'
+                    save_post = await bot.send_message(channel, message_for_post,  parse_mode="MarkdownV2")
+                else:
+                    save_post = await bot.send_message(channel, message_for_post)
 
                 #Сохраняем пост в БД
                 save_post = ChannelPosting(save_post)
-                save_post.save_post(author = message.from_user.id)
+                save_post.save_post(author)
     except (BotKicked, Unauthorized):
         await message.reply('Бот больше не состоит в привязанном к чату канале.')
 
